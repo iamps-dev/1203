@@ -1,4 +1,4 @@
-package dto;
+package practice.demo.dto;
 
 public class AuthResponse {
 

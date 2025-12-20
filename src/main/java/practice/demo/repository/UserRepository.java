@@ -1,6 +1,6 @@
-package repository;
+package practice.demo.repository;
 
-import entity.User;
+import practice.demo.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

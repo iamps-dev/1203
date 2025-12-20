@@ -1,12 +1,11 @@
-package dto;
+package practice.demo.dto;
 
-public class SignUpRequest {
+public class LoginRequest {
 
     private String email;
     private String password;
-    private String confirmPassword;
 
-    public SignUpRequest() {
+    public LoginRequest() {
     }
 
     public String getEmail() {
@@ -23,13 +22,5 @@ public class SignUpRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
     }
 }

@@ -1,4 +1,4 @@
-package entity;
+package practice.demo.entity;
 
 import jakarta.persistence.*;
 
