@@ -1,4 +1,4 @@
-package practice.demo.service;
+package practice.demo.service.users;
 
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.AuthResponse;
@@ -20,8 +20,14 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // 🔹 ADD THIS
+    @Autowired
+    private OtpService otpService;
+
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    // ================= SIGNUP =================
+    // ================= SIGNUP =================
     public ApiResponse signUp(SignUpRequest request) {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
@@ -35,30 +41,44 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        // 🔹 Set default role
+        user.setRole("USER");
+
         userRepository.save(user);
 
-        return new ApiResponse(true, "User registered successfully!");
+        // Send OTP
+        otpService.sendOtp(user.getEmail());
+
+        return new ApiResponse(
+                true,
+                "Signup successful. OTP sent to your email.",
+                user.getEmail()   // 👈 data field
+        );
     }
 
+    // ================= LOGIN =================
     public ApiResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElse(null);
+        // Check if user exists
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
         if (user == null) {
-            return new ApiResponse(false, "User not found!");
+            // Email not registered
+            return new ApiResponse(false, "User not found! Please sign up first.");
         }
 
+        // ================= CHECK OTP VERIFICATION =================
+
+
+        // Check password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return new ApiResponse(false, "Invalid password!");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        // Generate JWT token
+        String token = jwtUtil.generateUserToken(user.getEmail());
 
-        return new ApiResponse(
-                true,
-                "Login successful",
-                new AuthResponse(token)
-        );
+        return new ApiResponse(true, "Login successful", new AuthResponse(token));
     }
 }

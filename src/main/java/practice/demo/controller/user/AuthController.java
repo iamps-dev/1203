@@ -1,11 +1,11 @@
-package practice.demo.controller;
+package practice.demo.controller.user;
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.LoginRequest;
 import practice.demo.dto.SignUpRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import practice.demo.service.AuthService;
+import practice.demo.service.users.AuthService;
 
 @RestController
 @RequestMapping("/api/auth/user")
@@ -22,9 +22,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(
-
-
-
             @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
