@@ -3,7 +3,7 @@ package practice.demo.controller.admin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import practice.demo.ApiResponse.ApiResponse;
-import practice.demo.dto.OtpVerifyRequest;
+import practice.demo.dto.admin.OtpVerifyRequest;
 import practice.demo.service.users.OtpService;
 
 @RestController
@@ -24,4 +24,11 @@ public class OtpController {
     public ApiResponse verifyOtp(@RequestBody OtpVerifyRequest request) {
         return otpService.verifyOtp(request.getEmail(), request.getOtp());
     }
+
+    // 🔹 Resend OTP
+    @PostMapping("/resend")
+    public ApiResponse resendOtp(@RequestBody OtpVerifyRequest request) {
+        return otpService.resendOtp(request.getEmail());
+    }
+
 }

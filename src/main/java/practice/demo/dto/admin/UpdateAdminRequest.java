@@ -11,6 +11,7 @@ public class UpdateAdminRequest {
     public Long getAdminId() {
         return adminId;
     }
+
     public void setAdminId(Long adminId) {
         this.adminId = adminId;
     }
@@ -18,6 +19,7 @@ public class UpdateAdminRequest {
     public String getNewEmail() {
         return newEmail;
     }
+
     public void setNewEmail(String newEmail) {
         this.newEmail = newEmail;
     }
@@ -25,6 +27,7 @@ public class UpdateAdminRequest {
     public String getNewPassword() {
         return newPassword;
     }
+
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }

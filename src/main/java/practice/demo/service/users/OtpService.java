@@ -93,4 +93,72 @@ public class OtpService {
 
         return new ApiResponse(true, "OTP verified successfully");
     }
+
+    // ================= RESEND OTP =================
+    public ApiResponse resendOtp(String email) {
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return new ApiResponse(false, "User not found");
+        }
+
+        OtpVerification otpEntity = otpRepository
+                .findByUser(user)
+                .orElse(null);
+
+        if (otpEntity == null) {
+            return new ApiResponse(false, "OTP not requested yet");
+        }
+
+        // ❌ If OTP already verified
+        if (otpEntity.isVerified()) {
+            return new ApiResponse(false, "OTP already verified");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 🔒 Check if resend is blocked
+        if (otpEntity.getResendBlockedUntil() != null) {
+            if (now.isBefore(otpEntity.getResendBlockedUntil())) {
+                return new ApiResponse(
+                        false,
+                        "OTP resend blocked. Try again after 1 hour"
+                );
+            } else {
+                // ✅ Auto-unblock after 1 hour
+                otpEntity.setResendBlockedUntil(null);
+                otpEntity.setResendCount(0);
+            }
+        }
+
+        // ❌ Max resend reached
+        if (otpEntity.getResendCount() >= 3) {
+            otpEntity.setResendBlockedUntil(now.plusHours(1));
+            otpRepository.save(otpEntity);
+
+            return new ApiResponse(
+                    false,
+                    "OTP resend limit reached. Blocked for 1 hour"
+            );
+        }
+
+        // ✅ Generate new OTP
+        String newOtp = String.valueOf(1000 + new Random().nextInt(9000));
+
+        otpEntity.setOtp(newOtp);
+        otpEntity.setExpiryTime(now.plusMinutes(5));
+        otpEntity.setVerified(false);
+        otpEntity.setResendCount(otpEntity.getResendCount() + 1);
+
+        otpRepository.save(otpEntity);
+
+        emailService.sendOtpEmail(user.getEmail(), newOtp);
+
+        return new ApiResponse(
+                true,
+                "OTP resent successfully (" + otpEntity.getResendCount() + "/3)"
+        );
+    }
+
+
 }

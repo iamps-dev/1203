@@ -24,6 +24,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Autowired
     private UserRepository userRepository;
 
+    // 🔴 Send proper 401 JSON
+    private void unauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("""
+                {
+                  "success": false,
+                  "message": "%s"
+                }
+                """.formatted(message));
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -32,6 +44,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
+        // ✅ No token → let Spring Security handle protected routes
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -40,24 +53,28 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             String token = header.substring(7);
 
+            // 🔐 Extract JWT data
             String email = jwtUtil.extractEmail(token);
             String role = jwtUtil.extractRole(token);
 
             User user = userRepository.findByEmail(email).orElse(null);
             if (user == null) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                unauthorized(response, "Invalid token user");
                 return;
             }
 
-            // 🔥 TOKEN VERSION VALIDATION (ADMIN + SUPER_ADMIN)
+            // 🔥 Token version validation (ADMIN / SUPER_ADMIN)
             if ("ADMIN".equals(role) || "SUPER_ADMIN".equals(role)) {
                 Integer tokenVersion = jwtUtil.extractTokenVersion(token);
-                if (tokenVersion == null || !tokenVersion.equals(user.getTokenVersion())) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+                if (tokenVersion == null ||
+                        !tokenVersion.equals(user.getTokenVersion())) {
+                    unauthorized(response, "Token expired. Please login again.");
                     return;
                 }
             }
 
+            // ✅ Authentication success
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             user,
@@ -68,7 +85,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            // ❌ Expired / Invalid JWT
+            unauthorized(response, "Unauthorized or token expired");
             return;
         }
 

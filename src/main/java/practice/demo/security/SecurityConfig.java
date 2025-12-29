@@ -44,7 +44,8 @@ public class SecurityConfig {
                 // 🔒 Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admins/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/api/admins/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+
                         .anyRequest().authenticated()
                 )
 
