@@ -18,7 +18,7 @@
         private final SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
         private final long USER_EXPIRATION = 1000 * 60 * 60 * 24; // 24 hours
-        private final long ADMIN_EXPIRATION = 1000 * 60 * 60;    // 1 hour
+        private final long ADMIN_EXPIRATION = 1000 * 60 * 60; // 1 hour
 
         // ✅ USER TOKEN
         public String generateUserToken(String email) {

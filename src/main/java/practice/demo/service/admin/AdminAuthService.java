@@ -22,6 +22,7 @@ public class AdminAuthService {
     private JwtUtil jwtUtil;
 
     // ================= LOGIN =================
+// ================= LOGIN =================
     public ApiResponse login(AdminLoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
@@ -30,7 +31,10 @@ public class AdminAuthService {
             return new ApiResponse(false, "User not found");
         }
 
-        if (!"SUPER_ADMIN".equalsIgnoreCase(user.getRole())) {
+        // ✅ ALLOW BOTH ADMIN & SUPER_ADMIN
+        if (!("ADMIN".equalsIgnoreCase(user.getRole())
+                || "SUPER_ADMIN".equalsIgnoreCase(user.getRole()))) {
+
             return new ApiResponse(false, "Access denied");
         }
 
@@ -44,7 +48,15 @@ public class AdminAuthService {
     }
 
     // ================= CREATE ADMIN =================
-    public ApiResponse createAdmin(CreateAdminRequest request) {
+    public ApiResponse createAdmin(String token, CreateAdminRequest request) {
+
+        String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
+        User loggedUser = userRepository.findByEmail(email).orElse(null);
+
+
+        if (loggedUser == null || !"SUPER_ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
+            return new ApiResponse(false, "Only Super Admin can create admins");
+        }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return new ApiResponse(false, "Email already exists");

@@ -11,7 +11,7 @@ import practice.demo.service.admin.AdminAuthService;
 public class AdminController {
 
     @Autowired
-    private AdminAuthService adminAuthService;
+        private AdminAuthService adminAuthService;
 
     // 🔐 SUPER ADMIN LOGIN
     @PostMapping("/login")
@@ -21,9 +21,13 @@ public class AdminController {
 
     // ➕ CREATE ADMIN (SUPER_ADMIN ONLY)
     @PostMapping("/create")
-    public ApiResponse createAdmin(@RequestBody CreateAdminRequest request) {
-        return adminAuthService.createAdmin(request);
+    public ApiResponse createAdmin(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody CreateAdminRequest request) {
+
+        return adminAuthService.createAdmin(authorizationHeader, request);
     }
+
 
     // ✏ UPDATE ADMIN (SUPER_ADMIN ONLY)
     @PutMapping("/update")
