@@ -2,23 +2,21 @@ package practice.demo.controller.admin;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import practice.demo.dto.admin.AdminResponse;
+import practice.demo.dto.admin.AdminListResponse;
 import practice.demo.service.admin.AdminListService;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/auth/admin")
 public class AdminListController {
 
     @Autowired
     private AdminListService adminListService;
 
-    // ✅ GET all admins
+    // ✅ ONLY SUPER_ADMIN CAN ACCESS
     @GetMapping("/all")
-    public List<AdminResponse> getAllAdmins() {
+    public AdminListResponse getAllAdmins(
+            @RequestHeader("Authorization") String authorizationHeader) {
 
-        return adminListService.getAllAdmins();
-
+        return adminListService.getAllAdmins(authorizationHeader);
     }
 }
