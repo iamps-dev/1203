@@ -18,38 +18,56 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role; // USER or ADMIN
+    private String role;
 
     @Column(nullable = false)
-    private int tokenVersion = 0; // 🔥 for JWT invalidation
+    private int tokenVersion = 0;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "password_changed_at", nullable = false)
+    private LocalDateTime passwordChangedAt;
+
+    // ✅ Auto set on insert
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.passwordChangedAt = now;
     }
 
-    // 🔹 Constructors
-    public User() {}
-
-    // 🔹 Getters & Setters
+    // ================= GETTERS =================
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
 
     public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
 
     public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 
     public int getTokenVersion() { return tokenVersion; }
-    public void setTokenVersion(int tokenVersion) { this.tokenVersion = tokenVersion; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
+
+    // ================= SETTERS =================
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public void setTokenVersion(int tokenVersion) {
+        this.tokenVersion = tokenVersion;
+    }
+
+    // 🔐 IMPORTANT: PASSWORD SETTER
+    public void setPassword(String password) {
+        this.password = password;
+        this.passwordChangedAt = LocalDateTime.now(); // ✅ update time
+    }
 }

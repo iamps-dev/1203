@@ -38,9 +38,7 @@ public class AdminListService {
             Integer tokenVersion = jwtUtil.extractTokenVersion(token);
 
             User loggedUser = userRepository.findByEmail(email).orElse(null);
-            if (loggedUser == null ||
-                    loggedUser.getTokenVersion() != tokenVersion) {
-
+            if (loggedUser == null || loggedUser.getTokenVersion() != tokenVersion) {
                 return new AdminListResponse("Invalid token", List.of());
             }
 
@@ -58,7 +56,9 @@ public class AdminListService {
                             admin.getId(),
                             admin.getEmail(),
                             admin.getRole(),
-                            admin.getCreatedAt()
+                            admin.getCreatedAt(),
+                            admin.getTokenVersion(),
+                            admin.getPasswordChangedAt() // ✅ CORRECT
                     ))
                     .collect(Collectors.toList());
 
