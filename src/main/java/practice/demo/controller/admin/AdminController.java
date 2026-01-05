@@ -11,27 +11,29 @@ import practice.demo.service.admin.AdminAuthService;
 public class AdminController {
 
     @Autowired
-        private AdminAuthService adminAuthService;
+    private AdminAuthService adminAuthService;
 
-    // 🔐 SUPER ADMIN LOGIN
     @PostMapping("/login")
     public ApiResponse login(@RequestBody AdminLoginRequest request) {
         return adminAuthService.login(request);
     }
 
-    // ➕ CREATE ADMIN (SUPER_ADMIN ONLY)
     @PostMapping("/create")
     public ApiResponse createAdmin(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody CreateAdminRequest request) {
-
         return adminAuthService.createAdmin(authorizationHeader, request);
     }
 
-
-    // ✏ UPDATE ADMIN (SUPER_ADMIN ONLY)
     @PutMapping("/update")
     public ApiResponse updateAdmin(@RequestBody UpdateAdminRequest request) {
         return adminAuthService.updateAdmin(request);
+    }
+
+    @PutMapping("/status")
+    public ApiResponse changeAdminStatus(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody UpdateAdminStatusRequest request) {
+        return adminAuthService.changeAdminStatus(authorizationHeader, request);
     }
 }

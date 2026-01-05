@@ -5,6 +5,7 @@ public class UpdateAdminRequest {
     private Long adminId;
     private String newEmail;
     private String newPassword;
+    private Boolean isActive; // ✅ Added this field
 
     public UpdateAdminRequest() {}
 
@@ -30,5 +31,13 @@ public class UpdateAdminRequest {
 
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
+    }
+
+    public Boolean getIsActive() { // ✅ Getter
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) { // ✅ Setter
+        this.isActive = isActive;
     }
 }
