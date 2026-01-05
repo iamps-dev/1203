@@ -20,8 +20,9 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false)
-    private int tokenVersion = 0;
+    // Renamed from tokenVersion -> passwordVersion
+    @Column(name = "password_version", nullable = false)
+    private int passwordVersion = 0;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -29,6 +30,7 @@ public class User {
     @Column(name = "password_changed_at", nullable = false)
     private LocalDateTime passwordChangedAt;
 
+    // =================== Lifecycle Hooks ===================
     // ✅ Auto set on insert
     @PrePersist
     protected void onCreate() {
@@ -37,7 +39,7 @@ public class User {
         this.passwordChangedAt = now;
     }
 
-    // ================= GETTERS =================
+    // =================== GETTERS ===================
     public Long getId() { return id; }
 
     public String getEmail() { return email; }
@@ -46,28 +48,23 @@ public class User {
 
     public String getRole() { return role; }
 
-    public int getTokenVersion() { return tokenVersion; }
+    public int getPasswordVersion() { return passwordVersion; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
 
-    // ================= SETTERS =================
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    // =================== SETTERS ===================
+    public void setEmail(String email) { this.email = email; }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
+    public void setRole(String role) { this.role = role; }
 
-    public void setTokenVersion(int tokenVersion) {
-        this.tokenVersion = tokenVersion;
-    }
+    public void setPasswordVersion(int passwordVersion) { this.passwordVersion = passwordVersion; }
 
     // 🔐 IMPORTANT: PASSWORD SETTER
     public void setPassword(String password) {
         this.password = password;
-        this.passwordChangedAt = LocalDateTime.now(); // ✅ update time
+        this.passwordChangedAt = LocalDateTime.now(); // update timestamp
+        this.passwordVersion++; // increment version automatically
     }
 }

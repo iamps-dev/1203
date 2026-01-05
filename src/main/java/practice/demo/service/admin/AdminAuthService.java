@@ -95,7 +95,7 @@ public class AdminAuthService {
         admin.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
         // 🔥 invalidate old JWT tokens
-        admin.setTokenVersion(admin.getTokenVersion() + 1);
+        admin.setPasswordVersion(admin.getPasswordVersion() + 1);
 
         userRepository.save(admin);
 

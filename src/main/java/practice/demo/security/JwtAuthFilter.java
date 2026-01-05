@@ -68,7 +68,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 Integer tokenVersion = jwtUtil.extractTokenVersion(token);
 
                 if (tokenVersion == null ||
-                        !tokenVersion.equals(user.getTokenVersion())) {
+                        !tokenVersion.equals(user.getPasswordVersion())) {
                     unauthorized(response, "Token expired. Please login again.");
                     return;
                 }

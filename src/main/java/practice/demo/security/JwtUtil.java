@@ -35,7 +35,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(admin.getEmail())
                 .claim("role", admin.getRole())
-                .claim("tokenVersion", admin.getTokenVersion())
+                .claim("tokenVersion", admin.getPasswordVersion())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ADMIN_EXPIRATION))
                 .signWith(key, SignatureAlgorithm.HS256)

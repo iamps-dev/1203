@@ -8,7 +8,7 @@ public class AdminResponse {
     private String email;
     private String role;
     private LocalDateTime createdAt;
-    private int tokenVersion;
+    private int passwordVersion;  // ✅ renamed from tokenVersion
 
     // 🔐 NEW
     private LocalDateTime passwordChangedAt;
@@ -18,14 +18,14 @@ public class AdminResponse {
             String email,
             String role,
             LocalDateTime createdAt,
-            int tokenVersion,
+            int passwordVersion,          // ✅ renamed
             LocalDateTime passwordChangedAt
     ) {
         this.id = id;
         this.email = email;
         this.role = role;
         this.createdAt = createdAt;
-        this.tokenVersion = tokenVersion;
+        this.passwordVersion = passwordVersion;  // ✅ renamed
         this.passwordChangedAt = passwordChangedAt;
     }
 
@@ -47,8 +47,8 @@ public class AdminResponse {
         return createdAt;
     }
 
-    public int getTokenVersion() {
-        return tokenVersion;
+    public int getPasswordVersion() {          // ✅ renamed getter
+        return passwordVersion;
     }
 
     public LocalDateTime getPasswordChangedAt() {
