@@ -20,27 +20,26 @@ public class ApiResponse {
         this.data = data;
     }
 
-    public boolean isSuccess() {
-        return success;
+    // ✅ STATIC HELPERS (IMPORTANT)
+    public static ApiResponse success(String message) {
+        return new ApiResponse(true, message);
     }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
+    public static ApiResponse success(String message, Object data) {
+        return new ApiResponse(true, message, data);
     }
 
-    public String getMessage() {
-        return message;
+    public static ApiResponse error(String message) {
+        return new ApiResponse(false, message);
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
+    // ===== Getters / Setters =====
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
 
-    public Object getData() {
-        return data;
-    }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 
-    public void setData(Object data) {
-        this.data = data;
-    }
+    public Object getData() { return data; }
+    public void setData(Object data) { this.data = data; }
 }

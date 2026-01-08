@@ -1,6 +1,6 @@
 package practice.demo.controller.admin;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.admin.*;
@@ -8,10 +8,10 @@ import practice.demo.service.admin.AdminAuthService;
 
 @RestController
 @RequestMapping("/api/auth/admin")
+@RequiredArgsConstructor
 public class AdminController {
 
-    @Autowired
-    private AdminAuthService adminAuthService;
+    private final AdminAuthService adminAuthService;
 
     @PostMapping("/login")
     public ApiResponse login(@RequestBody AdminLoginRequest request) {
@@ -34,6 +34,7 @@ public class AdminController {
     public ApiResponse changeAdminStatus(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestBody UpdateAdminStatusRequest request) {
+
         return adminAuthService.changeAdminStatus(authorizationHeader, request);
     }
 }

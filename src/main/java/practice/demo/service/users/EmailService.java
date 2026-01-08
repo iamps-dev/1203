@@ -1,4 +1,4 @@
-package practice.demo.service.admin;
+package practice.demo.service.users;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;

@@ -1,4 +1,4 @@
-package practice.demo.dto.admin;
+package practice.demo.dto.user;
 
 public class OtpVerifyRequest {
 

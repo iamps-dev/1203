@@ -1,8 +1,9 @@
 package practice.demo.service.admin;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.admin.*;
 import practice.demo.entity.User;
@@ -10,73 +11,69 @@ import practice.demo.repository.UserRepository;
 import practice.demo.security.JwtUtil;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class AdminAuthService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    // ================= LOGIN =================
     public ApiResponse login(AdminLoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
-        if (user == null) return new ApiResponse(false, "User not found");
+        if (user == null)
+            return new ApiResponse(false, "User not found");
 
         if (!user.isActive())
-            return new ApiResponse(false, "Account deactivated by Super Admin");
+            return new ApiResponse(false, "Account deactivated");
 
-        if (!("ADMIN".equalsIgnoreCase(user.getRole())
-                || "SUPER_ADMIN".equalsIgnoreCase(user.getRole()))) {
+        if (!user.getRole().equalsIgnoreCase("ADMIN")
+                && !user.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Access denied");
-        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
             return new ApiResponse(false, "Invalid credentials");
 
-        String token = jwtUtil.generateAdminToken(user);
-        return new ApiResponse(true, "Login successful", token);
+        return new ApiResponse(
+                true,
+                "Login successful",
+                jwtUtil.generateAdminToken(user)
+        );
     }
 
-    // ================= CREATE ADMIN =================
     public ApiResponse createAdmin(String token, CreateAdminRequest request) {
 
         String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
         User superAdmin = userRepository.findByEmail(email).orElse(null);
 
-        if (superAdmin == null || !"SUPER_ADMIN".equalsIgnoreCase(superAdmin.getRole()))
+        if (superAdmin == null || !superAdmin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Only Super Admin can create admins");
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent())
+        if (userRepository.existsByEmail(request.getEmail()))
             return new ApiResponse(false, "Email already exists");
 
         User admin = new User();
         admin.setEmail(request.getEmail());
         admin.setPassword(passwordEncoder.encode(request.getPassword()));
         admin.setRole("ADMIN");
-        admin.setActive(true); // always active when created
+        admin.setActive(true);
 
         userRepository.save(admin);
         return new ApiResponse(true, "Admin created successfully");
     }
 
-    // ================= UPDATE ADMIN =================
     public ApiResponse updateAdmin(UpdateAdminRequest request) {
 
         User admin = userRepository.findById(request.getAdminId()).orElse(null);
 
-        if (admin == null || "SUPER_ADMIN".equalsIgnoreCase(admin.getRole()))
+        if (admin == null || admin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Admin not found");
 
-        userRepository.findByEmail(request.getNewEmail()).ifPresent(existing -> {
-            if (!existing.getId().equals(admin.getId()))
-                throw new RuntimeException("Email already in use");
-        });
+        if (userRepository.existsByEmail(request.getNewEmail())
+                && !admin.getEmail().equals(request.getNewEmail()))
+            return new ApiResponse(false, "Email already in use");
 
         admin.setEmail(request.getNewEmail());
         admin.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -85,21 +82,19 @@ public class AdminAuthService {
         return new ApiResponse(true, "Admin updated successfully");
     }
 
-    // ================= TOGGLE ADMIN ACTIVE/INACTIVE =================
     public ApiResponse changeAdminStatus(String token, UpdateAdminStatusRequest request) {
 
         String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
         User superAdmin = userRepository.findByEmail(email).orElse(null);
 
-        if (superAdmin == null || !"SUPER_ADMIN".equalsIgnoreCase(superAdmin.getRole()))
+        if (superAdmin == null || !superAdmin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Only Super Admin allowed");
 
         User admin = userRepository.findById(request.getAdminId()).orElse(null);
 
-        if (admin == null || "SUPER_ADMIN".equalsIgnoreCase(admin.getRole()))
+        if (admin == null || admin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Invalid admin");
 
-        // 🔥 toggle active/inactive + force logout
         admin.setActive(request.isActive());
         userRepository.save(admin);
 

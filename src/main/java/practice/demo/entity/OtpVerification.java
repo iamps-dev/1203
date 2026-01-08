@@ -12,7 +12,7 @@ public class OtpVerification {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Column(nullable = false)
@@ -21,62 +21,32 @@ public class OtpVerification {
     @Column(nullable = false)
     private LocalDateTime expiryTime;
 
-    private boolean verified;
+    @Column(nullable = false)
+    private boolean verified = false;
 
-    // 🔥 NEW FIELDS
-    private int resendCount; // max 3
-    private LocalDateTime resendBlockedUntil; // 1 hour block
+    // 🔐 security
+    private int resendCount = 0;
+    private LocalDateTime resendBlockedUntil;
 
-    // ===== Getters & Setters =====
+    // ===== GETTERS / SETTERS =====
+    public Long getId() { return id; }
 
-    public Long getId() {
-        return id;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public User getUser() {
-        return user;
-    }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public LocalDateTime getExpiryTime() { return expiryTime; }
+    public void setExpiryTime(LocalDateTime expiryTime) { this.expiryTime = expiryTime; }
 
-    public String getOtp() {
-        return otp;
-    }
+    public boolean isVerified() { return verified; }
+    public void setVerified(boolean verified) { this.verified = verified; }
 
-    public void setOtp(String otp) {
-        this.otp = otp;
-    }
+    public int getResendCount() { return resendCount; }
+    public void setResendCount(int resendCount) { this.resendCount = resendCount; }
 
-    public LocalDateTime getExpiryTime() {
-        return expiryTime;
-    }
-
-    public void setExpiryTime(LocalDateTime expiryTime) {
-        this.expiryTime = expiryTime;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
-    }
-
-    public int getResendCount() {
-        return resendCount;
-    }
-
-    public void setResendCount(int resendCount) {
-        this.resendCount = resendCount;
-    }
-
-    public LocalDateTime getResendBlockedUntil() {
-        return resendBlockedUntil;
-    }
-
+    public LocalDateTime getResendBlockedUntil() { return resendBlockedUntil; }
     public void setResendBlockedUntil(LocalDateTime resendBlockedUntil) {
         this.resendBlockedUntil = resendBlockedUntil;
     }

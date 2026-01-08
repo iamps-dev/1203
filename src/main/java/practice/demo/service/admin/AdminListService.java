@@ -1,9 +1,8 @@
 package practice.demo.service.admin;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import practice.demo.dto.admin.AdminListResponse;
-import practice.demo.dto.admin.AdminResponse;
+import practice.demo.dto.admin.allAdminResponse;
 import practice.demo.entity.User;
 import practice.demo.repository.UserRepository;
 import practice.demo.security.JwtUtil;
@@ -12,60 +11,58 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AdminListService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    // 🔐 ONLY SUPER_ADMIN
-    public AdminListResponse getAllAdmins(String authorizationHeader) {
+    // 👑 ONLY SUPER_ADMIN
+    public allAdminResponse getAllAdmins(String authorizationHeader) {
 
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            return new AdminListResponse("Token missing", List.of());
+            return new allAdminResponse("Authorization token missing", List.of());
         }
 
-        String token = authorizationHeader.replace("Bearer ", "");
+        String token = authorizationHeader.substring(7);
 
         try {
             if (jwtUtil.isTokenExpired(token)) {
-                return new AdminListResponse("Token expired", List.of());
+                return new allAdminResponse("Token expired", List.of());
             }
 
             String email = jwtUtil.extractEmail(token);
-            Integer tokenVersion = jwtUtil.extractTokenVersion(token);
+            int tokenVersion = jwtUtil.extractTokenVersion(token);
 
             User loggedUser = userRepository.findByEmail(email).orElse(null);
+
             if (loggedUser == null || loggedUser.getPasswordVersion() != tokenVersion) {
-                return new AdminListResponse("Invalid token", List.of());
+                return new allAdminResponse("Invalid token", List.of());
             }
 
-            // 👑 ONLY SUPER ADMIN
             if (!"SUPER_ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
-                return new AdminListResponse("Access denied", List.of());
+                return new allAdminResponse("Access denied", List.of());
             }
 
-            List<AdminResponse> admins = userRepository.findAll()
+            List<allAdminResponse.AdminData> admins = userRepository.findAll()
                     .stream()
-                    .filter(user ->
-                            "ADMIN".equalsIgnoreCase(user.getRole()) ||
-                                    "SUPER_ADMIN".equalsIgnoreCase(user.getRole()))
-                    .map(admin -> new AdminResponse(
-                            admin.getId(),
-                            admin.getEmail(),
-                            admin.getRole(),
-                            admin.getCreatedAt(),
-                            admin.getPasswordVersion(),
-                            admin.getPasswordChangedAt() // ✅ CORRECT
+                    .filter(u ->
+                            "ADMIN".equalsIgnoreCase(u.getRole()) ||
+                                    "SUPER_ADMIN".equalsIgnoreCase(u.getRole()))
+                    .map(u -> new allAdminResponse.AdminData(
+                            u.getId(),
+                            u.getEmail(),
+                            u.getRole(),
+                            u.getCreatedAt(),
+                            u.getPasswordVersion(),
+                            u.getPasswordChangedAt()
                     ))
                     .collect(Collectors.toList());
 
-            return new AdminListResponse("Admins fetched successfully", admins);
+            return new allAdminResponse("Admins fetched successfully", admins);
 
         } catch (Exception e) {
-            return new AdminListResponse("Token invalid", List.of());
+            return new allAdminResponse("Token invalid", List.of());
         }
     }
 }

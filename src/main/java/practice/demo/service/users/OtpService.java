@@ -1,80 +1,63 @@
 package practice.demo.service.users;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.entity.OtpVerification;
 import practice.demo.entity.User;
 import practice.demo.repository.OtpRepository;
 import practice.demo.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import practice.demo.service.admin.EmailService;
 
 import java.time.LocalDateTime;
 import java.util.Random;
 
 @Service
+@RequiredArgsConstructor
 public class OtpService {
 
-    @Autowired
-    private OtpRepository otpRepository;
+    private final OtpRepository otpRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private EmailService emailService;
+    private final int OTP_EXPIRY_MINUTES = 5;
+    private final int OTP_MAX_RESEND = 3;
+    private final int OTP_RESEND_BLOCK_HOURS = 1;
 
     // ================= SEND OTP =================
     public ApiResponse sendOtp(String email) {
 
         User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return new ApiResponse(false, "User not found");
-        }
+        if (user == null) return new ApiResponse(false, "User not found");
 
-        // ✅ Generate OTP
-        String otp = String.valueOf(1000 + new Random().nextInt(9000));
+        String otp = generateOtp();
 
-        OtpVerification otpEntity = otpRepository
-                .findByUser(user)
+        OtpVerification otpEntity = otpRepository.findByUser(user)
                 .orElse(new OtpVerification());
 
-        // ✅ CURRENT TIME = OTP GENERATED TIME
         LocalDateTime now = LocalDateTime.now();
 
         otpEntity.setUser(user);
         otpEntity.setOtp(otp);
-
-        // ✅ STORE OTP GENERATED TIME
-
-        // ✅ STORE OTP EXPIRY TIME (5 MINUTES)
-        otpEntity.setExpiryTime(now.plusMinutes(5));
-
+        otpEntity.setExpiryTime(now.plusMinutes(OTP_EXPIRY_MINUTES));
         otpEntity.setVerified(false);
+        otpEntity.setResendCount(0);
+        otpEntity.setResendBlockedUntil(null);
 
         otpRepository.save(otpEntity);
-
         emailService.sendOtpEmail(user.getEmail(), otp);
 
-        return new ApiResponse(true, "OTP sent to email");
+        return new ApiResponse(true, "OTP sent successfully");
     }
 
     // ================= VERIFY OTP =================
     public ApiResponse verifyOtp(String email, String otp) {
 
         User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return new ApiResponse(false, "User not found");
-        }
+        if (user == null) return new ApiResponse(false, "User not found");
 
-        OtpVerification otpData =
-                otpRepository.findByUserAndVerifiedFalse(user).orElse(null);
+        OtpVerification otpData = otpRepository.findByUserAndVerifiedFalse(user).orElse(null);
+        if (otpData == null) return new ApiResponse(false, "OTP not found or already verified");
 
-        if (otpData == null) {
-            return new ApiResponse(false, "OTP not found or already verified");
-        }
-
-        // ✅ CHECK EXPIRY USING STORED EXPIRY TIME
         if (LocalDateTime.now().isAfter(otpData.getExpiryTime())) {
             return new ApiResponse(false, "OTP expired");
         }
@@ -83,13 +66,8 @@ public class OtpService {
             return new ApiResponse(false, "Invalid OTP");
         }
 
-        // ✅ Mark OTP verified
         otpData.setVerified(true);
         otpRepository.save(otpData);
-
-        // ❌ DO NOT MARK USER VERIFIED — REMOVE
-        // user.setVerified(true);
-        // userRepository.save(user);
 
         return new ApiResponse(true, "OTP verified successfully");
     }
@@ -98,67 +76,40 @@ public class OtpService {
     public ApiResponse resendOtp(String email) {
 
         User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) {
-            return new ApiResponse(false, "User not found");
-        }
+        if (user == null) return new ApiResponse(false, "User not found");
 
-        OtpVerification otpEntity = otpRepository
-                .findByUser(user)
-                .orElse(null);
-
-        if (otpEntity == null) {
-            return new ApiResponse(false, "OTP not requested yet");
-        }
-
-        // ❌ If OTP already verified
-        if (otpEntity.isVerified()) {
-            return new ApiResponse(false, "OTP already verified");
-        }
+        OtpVerification otpEntity = otpRepository.findByUser(user).orElse(null);
+        if (otpEntity == null) return new ApiResponse(false, "OTP not requested yet");
+        if (otpEntity.isVerified()) return new ApiResponse(false, "OTP already verified");
 
         LocalDateTime now = LocalDateTime.now();
 
-        // 🔒 Check if resend is blocked
-        if (otpEntity.getResendBlockedUntil() != null) {
-            if (now.isBefore(otpEntity.getResendBlockedUntil())) {
-                return new ApiResponse(
-                        false,
-                        "OTP resend blocked. Try again after 1 hour"
-                );
-            } else {
-                // ✅ Auto-unblock after 1 hour
-                otpEntity.setResendBlockedUntil(null);
-                otpEntity.setResendCount(0);
-            }
+        // 🔒 Resend blocked
+        if (otpEntity.getResendBlockedUntil() != null && now.isBefore(otpEntity.getResendBlockedUntil())) {
+            return new ApiResponse(false, "OTP resend blocked. Try again after " + OTP_RESEND_BLOCK_HOURS + " hour(s)");
         }
 
-        // ❌ Max resend reached
-        if (otpEntity.getResendCount() >= 3) {
-            otpEntity.setResendBlockedUntil(now.plusHours(1));
+        if (otpEntity.getResendCount() >= OTP_MAX_RESEND) {
+            otpEntity.setResendBlockedUntil(now.plusHours(OTP_RESEND_BLOCK_HOURS));
             otpRepository.save(otpEntity);
-
-            return new ApiResponse(
-                    false,
-                    "OTP resend limit reached. Blocked for 1 hour"
-            );
+            return new ApiResponse(false, "OTP resend limit reached. Blocked for " + OTP_RESEND_BLOCK_HOURS + " hour(s)");
         }
 
         // ✅ Generate new OTP
-        String newOtp = String.valueOf(1000 + new Random().nextInt(9000));
-
+        String newOtp = generateOtp();
         otpEntity.setOtp(newOtp);
-        otpEntity.setExpiryTime(now.plusMinutes(5));
+        otpEntity.setExpiryTime(now.plusMinutes(OTP_EXPIRY_MINUTES));
         otpEntity.setVerified(false);
         otpEntity.setResendCount(otpEntity.getResendCount() + 1);
 
         otpRepository.save(otpEntity);
-
         emailService.sendOtpEmail(user.getEmail(), newOtp);
 
-        return new ApiResponse(
-                true,
-                "OTP resent successfully (" + otpEntity.getResendCount() + "/3)"
-        );
+        return new ApiResponse(true, "OTP resent successfully (" + otpEntity.getResendCount() + "/" + OTP_MAX_RESEND + ")");
     }
 
-
+    // =================== HELPER ===================
+    private String generateOtp() {
+        return String.valueOf(1000 + new Random().nextInt(9000)); // 4-digit OTP
+    }
 }

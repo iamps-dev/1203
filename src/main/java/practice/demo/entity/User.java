@@ -20,11 +20,10 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    // JWT invalidation version
+    // JWT invalidation
     @Column(name = "password_version", nullable = false)
-    private int passwordVersion = 0; // 🔹 Default 0
+    private int passwordVersion = 0;
 
-    // ACTIVE / INACTIVE
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
@@ -34,17 +33,16 @@ public class User {
     @Column(name = "password_changed_at", nullable = false)
     private LocalDateTime passwordChangedAt;
 
-    // ================= LIFECYCLE =================
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.passwordChangedAt = now;
+        this.passwordVersion = 0;
         this.isActive = true;
-        this.passwordVersion = 0; // 🔹 Ensure default 0
     }
 
-    // ================= GETTERS =================
+    // ===== GETTERS =====
     public Long getId() { return id; }
     public String getEmail() { return email; }
     public String getPassword() { return password; }
@@ -54,24 +52,18 @@ public class User {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getPasswordChangedAt() { return passwordChangedAt; }
 
-    // ================= SETTERS =================
+    // ===== SETTERS =====
     public void setEmail(String email) { this.email = email; }
     public void setRole(String role) { this.role = role; }
 
-    // 🔐 Password setter
     public void setPassword(String password) {
         this.password = password;
         this.passwordChangedAt = LocalDateTime.now();
-        if (this.passwordVersion == 0) {
-            this.passwordVersion = 1; // 🔹 First change starts from 1
-        } else {
-            this.passwordVersion++; // 🔹 Subsequent changes increment
-        }
+        this.passwordVersion++;
     }
 
-    // 🔄 Active / Inactive setter
     public void setActive(boolean active) {
         this.isActive = active;
-        this.passwordVersion++; // 🔥 Force logout when status changes
+        this.passwordVersion++; // force logout
     }
 }

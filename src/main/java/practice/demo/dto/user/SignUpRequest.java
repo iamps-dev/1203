@@ -1,4 +1,4 @@
-package practice.demo.dto;
+package practice.demo.dto.user;
 
 public class SignUpRequest {
 
