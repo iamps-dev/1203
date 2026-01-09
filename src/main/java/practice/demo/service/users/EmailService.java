@@ -15,16 +15,28 @@ public class EmailService {
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
-        message.setSubject("OTP Verification - My Safety");
+        message.setSubject("Your OTP Code – My Safety");
 
-        String text = "Hello,\n\n" +
-                "Your OTP for My Safety app is: " + otp + "\n\n" +
-                "This OTP is valid for 5 minutes only.\n\n" +
-                "If you did not request this, please ignore this email.\n\n" +
-                "Thank you,\n" +
-                "My Safety Team";
+        String text =
+                "Dear User,\n\n" +
+
+                        "We received a request to verify your email address for your My Safety account.\n\n" +
+
+                        "🔐 Your One-Time Password (OTP) is:\n\n" +
+                        "    " + otp + "\n\n" +
+
+                        "This OTP is valid for the next 5 minutes. Please do not share this code with anyone.\n\n" +
+
+                        "If you did not request this verification, you can safely ignore this email. " +
+                        "No changes will be made to your account.\n\n" +
+
+                        "Regards,\n" +
+                        "My Safety Team\n\n" +
+
+                        "⚠️ This is an automated message. Please do not reply to this email.";
 
         message.setText(text);
+
         message.setFrom("My Safety <iamps.software@gmail.com>");
 
         mailSender.send(message);
