@@ -1,7 +1,7 @@
 package practice.demo.controller.user;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.user.SOSRequest;
@@ -19,7 +19,14 @@ public class SOSController {
             Authentication authentication,
             @RequestBody SOSRequest request
     ) {
-        String email = authentication.name(); // from JWT
-        return sosService.sendSOS(email, request);
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ApiResponse.error("User not authenticated");
+        }
+
+        // ✅ Get logged-in user ID
+        Long userId = ((practice.demo.entity.User) authentication.getPrincipal()).getId();
+
+        // ✅ Call service
+        return sosService.sendSOS(userId, request);
     }
 }

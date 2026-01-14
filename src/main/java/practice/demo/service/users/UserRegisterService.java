@@ -18,23 +18,21 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserRegisterService {
+public class    UserRegisterService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final EmergencyContactRepository emergencyContactRepository;
 
-    public ApiResponse registerProfile(String email, RegisterProfileRequest request) {
+    public ApiResponse registerProfile(Long userId, RegisterProfileRequest request) {
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ✅ Check if profile already exists
-        if (userProfileRepository.findByUserId(user.getId()) != null) {
+        if (userProfileRepository.findByUserId(userId) != null) {
             return ApiResponse.error("User profile already exists");
         }
 
-        // Save user profile
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         profile.setFullName(request.getFullName());
@@ -46,9 +44,8 @@ public class UserRegisterService {
         profile.setPincode(request.getPincode());
         profile.setCountry(request.getCountry());
 
-        userProfileRepository.save(profile);
+        profile = userProfileRepository.save(profile); // ✅ Save and get proper ID
 
-        // Validate emergency contacts
         if (request.getEmergencyContacts() == null || request.getEmergencyContacts().isEmpty()) {
             return ApiResponse.error("At least one emergency contact is required");
         }
@@ -56,19 +53,16 @@ public class UserRegisterService {
         long primaryCount = request.getEmergencyContacts().stream()
                 .filter(c -> Boolean.TRUE.equals(c.getIsPrimary()))
                 .count();
+
         if (primaryCount != 1) {
             return ApiResponse.error("Exactly one emergency contact must be primary");
         }
 
-        // Save emergency contacts
         for (EmergencyContactRequest ecReq : request.getEmergencyContacts()) {
-            if ((ecReq.getPhone() == null || ecReq.getPhone().isBlank()) &&
-                    (ecReq.getEmail() == null || ecReq.getEmail().isBlank())) {
-                return ApiResponse.error("Phone or Email is required for emergency contact");
-            }
 
             EmergencyContact contact = new EmergencyContact();
-            contact.setUserProfile(profile);
+            contact.setUserProfile(profile); // ✅ Proper profile with correct ID
+
             contact.setName(ecReq.getName());
             contact.setPhone(ecReq.getPhone());
             contact.setEmail(ecReq.getEmail());
@@ -81,16 +75,17 @@ public class UserRegisterService {
     }
 
     private UserProfileResponse buildResponse(UserProfile profile) {
-        List<EmergencyContactResponse> contacts = emergencyContactRepository
-                .findByUserProfileId(profile.getId())
-                .stream()
-                .map(ec -> new EmergencyContactResponse(
-                        ec.getName(),
-                        ec.getPhone(),
-                        ec.getEmail(),
-                        ec.getIsPrimary()
-                ))
-                .collect(Collectors.toList());
+
+        List<EmergencyContactResponse> contacts =
+                emergencyContactRepository  .findByUserProfileId(profile.getId())
+                        .stream()
+                        .map(ec -> new EmergencyContactResponse(
+                                ec.getName(),
+                                ec.getPhone(),
+                                ec.getEmail(),
+                                ec.getIsPrimary()
+                        ))
+                        .collect(Collectors.toList());
 
         UserProfileResponse res = new UserProfileResponse();
         res.setFullName(profile.getFullName());
@@ -102,6 +97,7 @@ public class UserRegisterService {
         res.setPincode(profile.getPincode());
         res.setCountry(profile.getCountry());
         res.setEmergencyContacts(contacts);
+
         return res;
     }
 }

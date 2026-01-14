@@ -21,11 +21,13 @@ public class UserRegisterController {
             Authentication authentication,
             @RequestBody RegisterProfileRequest request
     ) {
-        User user = (User) authentication.getPrincipal();
-        String email = user.getEmail();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.ok(ApiResponse.error("User not authenticated"));
+        }
 
+        User user = (User) authentication.getPrincipal(); // ✅ SAME SOURCE
         ApiResponse response =
-                userRegisterService.registerProfile(email, request);
+                userRegisterService.registerProfile(user.getId(), request);
 
         return ResponseEntity.ok(response);
     }
