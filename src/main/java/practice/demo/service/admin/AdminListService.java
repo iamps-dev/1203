@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AdminListService {
+public class    AdminListService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -55,7 +55,10 @@ public class AdminListService {
                             u.getRole(),
                             u.getCreatedAt(),
                             u.getPasswordVersion(),
-                            u.getPasswordChangedAt()
+                            u.getPasswordChangedAt(),
+                            u.isActive() // ✅ include this
+
+
                     ))
                     .collect(Collectors.toList());
 

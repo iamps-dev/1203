@@ -19,7 +19,7 @@ public class UserAuthController {
     private final OtpService otpService;
 
     // ✅ USER SIGNUP
-    @PostMapping("/signup")
+        @PostMapping("/signup")
     public ResponseEntity<ApiResponse> signUp(@RequestBody SignUpRequest request) {
         return ResponseEntity.ok(authService.signUp(request));
     }

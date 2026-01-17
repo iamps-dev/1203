@@ -29,5 +29,8 @@ public class allAdminResponse {
         // 🔐 Security
         private int passwordVersion;
         private LocalDateTime passwordChangedAt;
+
+        // ✅ Active status
+        private boolean isActive; // <--- added
     }
 }

@@ -23,10 +23,10 @@ public class SOSController {
             return ApiResponse.error("User not authenticated");
         }
 
-        // ✅ Get logged-in user ID
-        Long userId = ((practice.demo.entity.User) authentication.getPrincipal()).getId();
+        // ✅ SAFE WAY (email/username from token)
+        String email = authentication.getName();
 
         // ✅ Call service
-        return sosService.sendSOS(userId, request);
+        return sosService.sendSOS(email, request);
     }
 }
