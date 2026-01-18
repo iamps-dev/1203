@@ -10,8 +10,6 @@ import practice.demo.entity.User;
 import practice.demo.repository.UserRepository;
 import practice.demo.security.JwtUtil;
 
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -89,29 +87,22 @@ public class AdminAuthService {
         String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
         User superAdmin = userRepository.findByEmail(email).orElse(null);
 
-        if (superAdmin == null || !superAdmin.getRole().equalsIgnoreCase("SUPER_ADMIN")) {
+        if (superAdmin == null || !superAdmin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Only Super Admin allowed");
-        }
 
         User admin = userRepository.findById(request.getAdminId()).orElse(null);
 
-        if (admin == null || admin.getRole().equalsIgnoreCase("SUPER_ADMIN")) {
+        if (admin == null || admin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
             return new ApiResponse(false, "Invalid admin");
-        }
 
         admin.setActive(request.isActive());
         userRepository.save(admin);
 
-        // ✅ RETURN UPDATED ADMIN DATA
         return new ApiResponse(
                 true,
                 request.isActive()
                         ? "Admin activated successfully"
-                        : "Admin deactivated successfully",
-                Map.of(
-                        "id", admin.getId(),
-                        "isActive", admin.isActive()
-                )
+                        : "Admin deactivated & logged out"
         );
     }
 }
