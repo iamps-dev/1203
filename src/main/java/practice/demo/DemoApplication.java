@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class 	DemoApplication {
 
 //	paresh songire
-	public static void main(String[] args) {
+	public static 	void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
