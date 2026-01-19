@@ -19,6 +19,9 @@ public class AdminAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    // =========================
+    // LOGIN
+    // =========================
     public ApiResponse login(AdminLoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
@@ -43,6 +46,9 @@ public class AdminAuthService {
         );
     }
 
+    // =========================
+    // CREATE ADMIN
+    // =========================
     public ApiResponse createAdmin(String token, CreateAdminRequest request) {
 
         String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
@@ -58,30 +64,41 @@ public class AdminAuthService {
         admin.setEmail(request.getEmail());
         admin.setPassword(passwordEncoder.encode(request.getPassword()));
         admin.setRole("ADMIN");
-        admin.setActive(true);
+        admin.setActive(true); // ✅ explicit
 
         userRepository.save(admin);
         return new ApiResponse(true, "Admin created successfully");
     }
 
+    // =========================
+    // UPDATE ADMIN
+    // =========================
     public ApiResponse updateAdmin(UpdateAdminRequest request) {
 
-        User admin = userRepository.findById(request.getAdminId()).orElse(null);
+        User admin = userRepository.findById(request.getAdminId())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        if (admin == null || admin.getRole().equalsIgnoreCase("SUPER_ADMIN"))
-            return new ApiResponse(false, "Admin not found");
+        if (request.getNewEmail() != null) {
+            admin.setEmail(request.getNewEmail());
+        }
 
-        if (userRepository.existsByEmail(request.getNewEmail())
-                && !admin.getEmail().equals(request.getNewEmail()))
-            return new ApiResponse(false, "Email already in use");
+        if (request.getNewPassword() != null) {
+            admin.setPassword(request.getNewPassword());
+        }
 
-        admin.setEmail(request.getNewEmail());
-        admin.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // 🔥 IMPORTANT FIX
+        if (request.getIsActive() != null) {
+            admin.setActive(request.getIsActive());
+        }
+
         userRepository.save(admin);
 
-        return new ApiResponse(true, "Admin updated successfully");
+        return ApiResponse.success("Admin updated successfully");
     }
 
+    // =========================
+    // CHANGE STATUS
+    // =========================
     public ApiResponse changeAdminStatus(String token, UpdateAdminStatusRequest request) {
 
         String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
