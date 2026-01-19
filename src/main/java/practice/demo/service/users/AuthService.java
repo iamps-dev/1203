@@ -7,9 +7,12 @@ import practice.demo.ApiResponse.ApiResponse;
 import practice.demo.dto.user.LoginRequest;
 import practice.demo.dto.user.LoginResponse; // ✅ updated import
 import practice.demo.dto.user.SignUpRequest;
+import practice.demo.entity.OtpVerification;
 import practice.demo.entity.User;
 import practice.demo.repository.UserRepository;
 import practice.demo.security.JwtUtil;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +27,23 @@ public class AuthService {
     // ================= SIGNUP =================
     public ApiResponse signUp(SignUpRequest request) {
 
-        if (!request.getPassword().equals(request.getConfirmPassword()))
+        // 1️⃣ Password match check
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
             return new ApiResponse(false, "Passwords do not match");
+        }
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent())
+        // 2️⃣ Email format validation (extra safety)
+        if (request.getEmail() == null ||
+                !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            return new ApiResponse(false, "Invalid email address");
+        }
+
+        // 3️⃣ Email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return new ApiResponse(false, "Email already registered");
+        }
 
+        // 4️⃣ Save user
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -37,10 +51,15 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // ✅ Send OTP after signup
-        otpService.sendOtp(user.getEmail());
+        // 5️⃣ Send OTP & CHECK RESULT
+        ApiResponse otpResponse = otpService.sendOtp(user.getEmail());
 
-        return new ApiResponse(true, "Signup successful. OTP sent to email", user.getEmail());
+        if (!otpResponse.isSuccess()) {
+            return new ApiResponse(false, otpResponse.getMessage());
+        }
+
+        // ✅ FINAL SUCCESS
+        return new ApiResponse(true, "Signup successful. OTP sent to email");
     }
 
     // ================= LOGIN =================
@@ -57,4 +76,7 @@ public class AuthService {
 
         return new ApiResponse(true, "Login successful", new LoginResponse(token)); // ✅ updated
     }
+
+
+
 }
