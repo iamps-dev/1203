@@ -44,6 +44,7 @@ public class SecurityConfig {
                 // 🔒 Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+
                         .requestMatchers("/api/security/**").permitAll()   // 🔹 add this
                         .requestMatchers("/api/hardware/**").permitAll()  // ✅ add this
 
